@@ -1,7 +1,7 @@
 # Supplementary material
 
 The R package used to compute test-statistics can be installed by
-devtools::install_github("koekvall/limestest@R1").
+`devtools::install_github("koekvall/limestest@R1")`.
 
 Please note the R package, though capable of computing the quantities needed for
 the paper "Uniform inference in linear mixed models", is in development
