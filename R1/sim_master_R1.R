@@ -23,15 +23,20 @@ cl <- makeCluster(num_cores)
 registerDoParallel(cl)
 
 source(paste0(fun_dir, "sim_funs_R1.R"))
-# Note the p does not include intercept here
-corr_settings <- list(cbind("n1" = 1000, "n2" = 3, "p" = 2,
-                            "psi1" = seq(-1, -0.8, length.out = 10)),
-                      cbind("n1" = 20, "n2" = 3, "p" = 2, 
-                            "psi1" = seq(-1, -0.2, length.out = 10)),
-                      cbind("n1" = 200, "n2" = 3, "p" = 100,
-                            "psi1" = seq(-1, -0.4, length.out = 10)))
+# Note the p does not include intercept here; notation slightly different from paper
+# to facilitate coding
 
-indep_settings <- list(cbind("n1" = 1000, "n2" = 3, "p" = 2,
+# psi1 is correlation and psi2 is common variance for correlated random
+# intercept and slope
+corr_settings <- rbind(cbind("n1" = 1000, "n2" = 3, "p" = 2, "psi1" = 1,
+                            "psi2" = seq(-1, -0.8, length.out = 10)),
+                      cbind("n1" = 20, "n2" = 3, "p" = 2, "psi1" = 1,
+                            "psi2" = seq(-1, -0.2, length.out = 10)),
+                      cbind("n1" = 200, "n2" = 3, "p" = 100, "psi1" = 1,
+                            "psi2" = seq(-1, -0.4, length.out = 10)))
+
+# psi1 and psi2 are variances of independent random intercept and slope
+indep_settings <- rbind(cbind("n1" = 1000, "n2" = 3, "p" = 2,
                              "psi1" = seq(0, 0.3, length.out = 10),
                              "psi2" = seq(0, 0.3, length.out = 10)),
                        cbind("n1" = 1000, "n2" = 3, "p" = 2,
@@ -47,7 +52,8 @@ indep_settings <- list(cbind("n1" = 1000, "n2" = 3, "p" = 2,
                              "psi1" = seq(0, 0.6, length.out = 10),
                              "psi2" = seq(0, 0.6, length.out = 10)))
 
-cross_settings <- list(cbind("n1" = 40, "n2" = 40, "p" = 2,
+# psi1 and psi2 are variances of independent crossed random effects
+cross_settings <- rbind(cbind("n1" = 40, "n2" = 40, "p" = 2,
                              "psi1" = seq(0, 0.04, length.out = 10),
                              "psi2" = seq(0, 0.04, length.out = 10)),
                        cbind("n1" = 20, "n2" = 80, "p" = 2,
@@ -59,19 +65,26 @@ cross_settings <- list(cbind("n1" = 40, "n2" = 40, "p" = 2,
                        cbind("n1" = 20, "n2" = 20, "p" = 80,
                              "psi1" = seq(0, 0.15, length.out = 10),
                              "psi2" = seq(0, 0.15, length.out = 10)))
+all_settings <- as.data.frame(rbind(corr_settings, indep_settings, cross_settings))
 
-num_indep_set <- sum(sapply(indep_settings, nrow))
-num_corr_set <- sum(sapply(corr_settings, nrow))
-num_cross_set <- sum(sapply(cross_settings, nrow))
-num_settings <- num_indep_set + num_corr_set + num_cross_set
+num_corr_set <- nrow(corr_settings)
+num_indep_set <- nrow(indep_settings)
+num_cross_set <- nrow(cross_settings)
+all_settings$type <-  c(rep("corr", num_corr_set), rep("indep", num_indep_set),
+                        rep("cross",  num_cross_set))
 
-run_settings <- 1:num_settings # Change this to only run some of the settings
-num_run_set <- length(run_settings)
-set_per_array <- max(floor(num_run_set / num_arrays), 1)
-this_array_set <- seq((array_id - 1) * set_per_array + 1, array_id * set_per_array)
-this_array_set[this_array_set > num_run_set] <- NA
-this_array_set <- na.omit(this_array_set)
+# Uncomment and edit to run only some of the settings
+# all_settings <- all_settings[all_settings$type == "corr", ]
 
+
+set_per_array <- ceiling(nrow(all_settings)/ num_arrays)
+array_ind <- rep(1:num_arrays, each = set_per_array)[1:nrow(all_settings)]
+
+for(ii in 1:num_run_set){
+  if(array_ind[ii] == array_id){
+    
+  }
+}
 
   
   psi <- c(1, correlations[jj], 1, 1)
