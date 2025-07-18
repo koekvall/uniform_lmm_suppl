@@ -1,6 +1,20 @@
-do_one_sim <- function(n1, n2, X, Z, psi, H, Xb, R = NULL, XtX
- = NULL, XtZ = NULL, ZtZ = NULL, REML = TRUE, type = "indep")
+do_one_sim <- function(settings)
 {
+  # Unpack settings
+  n1 <- settings$n1
+  n2 <- settings$n2
+  X <- settings$X
+  Z <- settings$Z
+  psi <- settings$psi
+  H <- settings$H
+  Xb <- settings$Xb
+  R <- settings$R
+  XtX <- settings$XtX
+  XtZ = settings$XtZ
+  ZtZ <- settings$ZtZ
+  REML <- settings$REML
+  type = settings$type
+
   r <- length(psi)
   n <- nrow(Z)
 
@@ -21,24 +35,36 @@ do_one_sim <- function(n1, n2, X, Z, psi, H, Xb, R = NULL, XtX
 
   if(is.null(ZtZ)){
     ZtZ <- crossprod(Z)
+    ZtZ <- methods::as(ZtZ, "generalMatrix")
   }
-  ZtZ <- method::as(ZtZ, "generalMatrix")
   # Generate data
-  y <- Xb + rnorm(n, sd = sqrt(psi[r])) + Z %*% crossprod(R, rnorm(q))
+  y <- as.vector(Xb + rnorm(n, sd = sqrt(psi[r])) + Z %*% crossprod(R, rnorm(q)))
 
   #############################################################################
   # Score statistics
   #############################################################################
+  browser()
   Psi_r <- Psi / psi[r]
-  XtY <- crossprod(X, y)
-  ZtY <- crossprod(Z, y)
-  stuff_REML <- limestest:::res_ll_cpp(Y = Y, X = X, Z = Z, XtY = XtY, ZtY = ZtY,
-                                       XtX = XtX, XtZ = XtZ, ZtZ = ZtZ,
-                                       Psi_r = Psi_r, psi_r = psi[r],
-                                       H = H, get_val = TRUE, get_score = TRUE,
+  XtY <- as.matrix(crossprod(X, y))
+  ZtY <- as.matrix(crossprod(Z, y))
+  
+  
+  stuff_REML <- limestest:::res_ll_cpp(Y = y,
+                                       X = X,
+                                       Z = Z,
+                                       XtY = XtY,
+                                       ZtY = ZtY,
+                                       XtX = XtX,
+                                       XtZ = XtZ,
+                                       ZtZ = ZtZ,
+                                       Psi_r = Psi_r,
+                                       psi_r = psi[r],
+                                       H = H,
+                                       get_val = TRUE,
+                                       get_score = TRUE,
                                        get_inf = TRUE)
-  e <- y - X %*% stuff_REML$beta # REML beta = ML beta at true psi
-  Zte <- crossprod(Z, e)
+  e <- as.vector(y - X %*% stuff_REML$beta) # REML beta = ML beta at true psi
+  Zte <- as.matrix(crossprod(Z, e))
   stuff <- limestest:::loglik_psi_cpp(e = e, Z = Z, Zte = Zte, XtZ = XtZ,
                                       ZtZ = ZtZ, Psi_r = Psi_r, psi_r = psi[r],
                                       H = H, get_val = TRUE, get_score = TRUE,
@@ -78,8 +104,8 @@ do_one_sim <- function(n1, n2, X, Z, psi, H, Xb, R = NULL, XtX
   Psi_hat <- limestest:::Psi_from_H_cpp(psi_mr = psi_hat[-r], H = H)
 
   # Get observed information (for Wald) and loglik (for LRT) at estimates
-  e <- y - X %*% fixef(fit) # Replace residuals
-  Zte <- crossprod(Z, e)
+  e <- as.vector(y - X %*% fixef(fit)) # Replace residuals
+  Zte <- as.vector(crossprod(Z, e))
   Psi_hat_r <- (1 / psi_hat[r]) * Psi_hat
   stuff_at_est <- limestest:::loglik_psi_cpp(e = e, Z = Z, Zte = Zte, XtZ = XtZ,
                                              ZtZ = ZtZ,

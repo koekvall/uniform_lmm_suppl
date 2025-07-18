@@ -150,9 +150,7 @@ if(setting == "indep"){
   H1 <- Matrix::Diagonal(2 * n1, x = c(rep(1, n1), rep(0, n1)))
   H2 <-  Matrix::Diagonal(2 * n1, x = c(rep(0, n1), rep(1, n1)))
   H <- cbind(H1, H2)
-  Psi <- Matrix::Diagonal(2 * n1, x = c(rep(variances[jj], n1),
-                                        rep(variances[jj], n1)))
-  R <- sqrt(Psi)
+
 
 
   out_mat <- foreach(kk = 1:num_reps, .combine = rbind,
