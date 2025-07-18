@@ -43,11 +43,9 @@ do_one_sim <- function(settings)
   #############################################################################
   # Score statistics
   #############################################################################
-  browser()
   Psi_r <- Psi / psi[r]
   XtY <- as.matrix(crossprod(X, y))
   ZtY <- as.matrix(crossprod(Z, y))
-  
   
   stuff_REML <- limestest:::res_ll_cpp(Y = y,
                                        X = X,
@@ -120,7 +118,7 @@ do_one_sim <- function(settings)
   # LR statistics
   #############################################################################
   if(REML){
-    ll_null <- stuff_REML$ll
+    ll_null <- stuff_REML$value
     ll_max <-limestest:::res_ll_cpp(Y = y, X = X, Z = Z, XtY = XtY, ZtY = ZtY,
                                          XtX = XtX, XtZ = XtZ, ZtZ = ZtZ,
                                          Psi_r = Psi_hat_r, psi_r = psi_hat[r],
