@@ -8,14 +8,14 @@ set.seed(1336)
 
 today <- as.numeric(format(Sys.time(), "%H%d%m%y"))
 array_id <- as.integer(Sys.getenv('SLURM_ARRAY_TASK_ID'))
+num_arrays <- 30 # This needs to be the same as the --array=1-30 argument in sh
 
 ###############################################################################
 # Settings
 ###############################################################################
-REML <- TRUE # Use REML estimates for competing methods or not
+
 # Common settings
 num_cores <-  as.integer(Sys.getenv("SLURM_CPUS_ON_NODE"))
-num_reps <- 1e2
 out_dir <- "/blue/k.ekvall/k.ekvall/Simulations/unif_lmm/R1/Results/" # has to end in /
 fun_dir <- "/blue/k.ekvall/k.ekvall/Simulations/unif_lmm/R1/" # has to end in /
 
@@ -23,43 +23,57 @@ cl <- makeCluster(num_cores)
 registerDoParallel(cl)
 
 source(paste0(fun_dir, "sim_funs_R1.R"))
+# Note the p does not include intercept here
+corr_settings <- list(cbind("n1" = 1000, "n2" = 3, "p" = 2,
+                            "psi1" = seq(-1, -0.8, length.out = 10)),
+                      cbind("n1" = 20, "n2" = 3, "p" = 2, 
+                            "psi1" = seq(-1, -0.2, length.out = 10)),
+                      cbind("n1" = 200, "n2" = 3, "p" = 100,
+                            "psi1" = seq(-1, -0.4, length.out = 10)))
 
-corr_settings <- list(c("n1" = 1000, "n2" = 3, "p" = 2),
-                      c("n1" = 1000, "n2" = 3, "p" = 200),
-                      c("n1" = 20, "n2" = 3, "p" = 2),
-                      c("n1" = 200, "n2" = 3, "p" = 100))
+indep_settings <- list(cbind("n1" = 1000, "n2" = 3, "p" = 2,
+                             "psi1" = seq(0, 0.3, length.out = 10),
+                             "psi2" = seq(0, 0.3, length.out = 10)),
+                       cbind("n1" = 1000, "n2" = 3, "p" = 2,
+                             "psi1" = seq(0, 0.3, length.out = 10),
+                             "psi2" = 0),
+                       cbind("n1" = 1000, "n2" = 3, "p" = 2,
+                             "psi1" = seq(0, 0.3, length.out = 10),
+                             "psi2" = 0.3),
+                       cbind("n1" = 20, "n2" = 3, "p" = 2, 
+                             "psi1" = seq(0, 0.8, length.out = 10),
+                             "psi2" = seq(0, 0.8, length.out = 10)),
+                       cbind("n1" = 200, "n2" = 3, "p" = 100,
+                             "psi1" = seq(0, 0.6, length.out = 10),
+                             "psi2" = seq(0, 0.6, length.out = 10)))
+
+cross_settings <- list(cbind("n1" = 40, "n2" = 40, "p" = 2,
+                             "psi1" = seq(0, 0.04, length.out = 10),
+                             "psi2" = seq(0, 0.04, length.out = 10)),
+                       cbind("n1" = 20, "n2" = 80, "p" = 2,
+                             "psi1" = seq(0, 0.15, length.out = 10),
+                             "psi2" = seq(0, 0.15, length.out = 10)),
+                       cbind("n1" = 10, "n2" = 10, "p" = 2,
+                             "psi1" = seq(0, 0.5, length.out = 10),
+                             "psi2" = seq(0, 0.5, length.out = 10)),
+                       cbind("n1" = 20, "n2" = 20, "p" = 80,
+                             "psi1" = seq(0, 0.15, length.out = 10),
+                             "psi2" = seq(0, 0.15, length.out = 10)))
+
+num_indep_set <- sum(sapply(indep_settings, nrow))
+num_corr_set <- sum(sapply(corr_settings, nrow))
+num_cross_set <- sum(sapply(cross_settings, nrow))
+num_settings <- num_indep_set + num_corr_set + num_cross_set
+
+run_settings <- 1:num_settings # Change this to only run some of the settings
+num_run_set <- length(run_settings)
+set_per_array <- max(floor(num_run_set / num_arrays), 1)
+this_array_set <- seq((array_id - 1) * set_per_array + 1, array_id * set_per_array)
+this_array_set[this_array_set > num_run_set] <- NA
+this_array_set <- na.omit(this_array_set)
 
 
-###############################################################################
-# Independent cluster simulation with correlation
-###############################################################################
-
-if(setting == "corr"){
-  if(large_n){
-    n1 <- 1000
-    n2 <- 3
-    correlations <- seq(-1, -0.8, length.out = num_par)
-  } else if(!large_p){
-    n1 <- 20
-    n2 <- 3
-    correlations <- seq(-1, -0.2, length.out = num_par)
-  } else{
-    n1 <- 20
-    n2 <- 3
-    correlations <- seq(-1, -0.2, length.out = num_par)
-  }
-
-  n <- n1 * n2
-  p <- ifelse(large_p, floor(n/5), 2)
-
-  if(large_n & large_p){
-      n1 <- 200
-      n2 <- 3
-      n <- n1 * n2
-      p <- 100
-      correlations <- seq(-1, -0.4, length.out = num_par)
-  }
-
+  
   psi <- c(1, correlations[jj], 1, 1)
 
   X <- cbind(1, matrix(runif(n * p, min = -1, max = 1), nrow = n, ncol = p))
