@@ -66,7 +66,6 @@ cross_settings <- rbind(cbind("n1" = 40, "n2" = 40, "p" = 2,
                              "psi1" = seq(0, 0.15, length.out = 10),
                              "psi2" = seq(0, 0.15, length.out = 10)))
 all_settings <- as.data.frame(rbind(corr_settings, indep_settings, cross_settings))
-
 num_corr_set <- nrow(corr_settings)
 num_indep_set <- nrow(indep_settings)
 num_cross_set <- nrow(cross_settings)
@@ -76,20 +75,57 @@ all_settings$type <-  c(rep("corr", num_corr_set), rep("indep", num_indep_set),
 # Uncomment and edit to run only some of the settings
 # all_settings <- all_settings[all_settings$type == "corr", ]
 
+expand_settings <- function(set, seed = NULL){
+  if(!is.null(seed)){
+    set.seed(seed)
+  }
+  n <- set$n1 * set$n2
+  X <- cbind(1, matrix(runif(n * set$p, min = -1, max = 1), nrow = n, ncol = set$p))
+  XtX <- crossprod(X)
+  b <- rnorm(set$p)
+  Xb <- X %*% b
+  
+  if(set$type == "corr"){
+    psi <- c(set$psi2, set$psi1, set$psi1, set$psi2)
+    H1 <- Matrix::kronecker(Matrix::Diagonal(set$n1), matrix(c(1, 0, 0, 0), 2, 2))
+    H2 <- Matrix::kronecker(Matrix::Diagonal(set$n1), matrix(c(0, 1, 1, 0), 2, 2))
+    H3 <- Matrix::kronecker(Matrix::Diagonal(set$n1), matrix(c(0, 0, 0, 1), 2, 2))
+    H <- cbind(H1, H2, H3)
+  } else if(set$type == "indep"){
+    psi <- c(set$psi1, set$psi2)
+    H1 <- Matrix::Diagonal(2 * set$n1, x = c(rep(1, set$n1), rep(0, set$n1)))
+    H2 <-  Matrix::Diagonal(2 * set$n1, x = c(rep(0, set$n1), rep(1, set$n1)))
+    H <- cbind(H1, H2)
+    Z1 <- Matrix::kronecker(Matrix::diag(n1), matrix(1, nrow = n2, ncol = 1))
+    Z2 <- Matrix::bdiag(lapply(1:n1,
+                               function(ii)X[((ii - 1) * n2 + 1):(ii * n2), 2, drop = FALSE]))
+    Z <- cbind(Z1, Z2)
+  } else{
+    psi <- c(set$psi1, set$psi2)
+    H1 <- Matrix::Diagonal(set$n1 + set$n2, c(rep(1, set$n1), rep(0, set$n2)))
+    H2 <- Matrix::Diagonal(set$n1 + set$n2, c(rep(0, set$n1), rep(1, set$n2)))
+    H <- cbind(H1, H2)
+  }
+  
+  
+  list("n1" = set$n1, "n2" = set$n2, "X" = X, "Z" = Z, "psi" = psi, "H" = H, "Xb" = Xb, 
+       "R" = NULL, "XtX" = XtX, "XtZ" = XtZ, "ZtZ" = ZtZ, "REML" = TRUE, "type" = set$type)
+}
+
 
 set_per_array <- ceiling(nrow(all_settings)/ num_arrays)
-array_ind <- rep(1:num_arrays, each = set_per_array)[1:nrow(all_settings)]
+assigned_array <- rep(1:num_arrays, each = set_per_array)[1:nrow(all_settings)]
 
 for(ii in 1:num_run_set){
-  if(array_ind[ii] == array_id){
+  if(assigned_array[ii] == array_id){
     
   }
 }
 
   
-  psi <- c(1, correlations[jj], 1, 1)
+  psi <- 
 
-  X <- cbind(1, matrix(runif(n * p, min = -1, max = 1), nrow = n, ncol = p))
+  
   XtX <- crossprod(X)
   b <- rnorm(ncol(X))
   Xb <- X %*% b
@@ -98,10 +134,7 @@ for(ii in 1:num_run_set){
         function(ii)X[((ii - 1) * n2 + 1):(ii * n2), 1:2]))
   ZtZ <- crossprod(Z)
   XtZ <- crossprod(X, Z)
-  H1 <- Matrix::kronecker(Matrix::Diagonal(n1), matrix(c(1, 0, 0, 0), 2, 2))
-  H2 <- Matrix::kronecker(Matrix::Diagonal(n1), matrix(c(0, 1, 1, 0), 2, 2))
-  H3 <- Matrix::kronecker(Matrix::Diagonal(n1), matrix(c(0, 0, 0, 1), 2, 2))
-  H <- cbind(H1, H2, H3)
+
   Psi1 <- matrix(c(psi[1:2], psi[2], psi[3]), 2, 2)
   Psi1_eig <- eigen(Psi1)
   R1 <- tcrossprod(diag(sqrt(Psi1_eig$values), ncol(Psi1)), Psi1_eig$vectors)
@@ -159,15 +192,10 @@ if(setting == "indep"){
   XtX <- crossprod(X)
   b <- rnorm(ncol(X))
   Xb <- X %*% b
-  Z1 <- Matrix::kronecker(Matrix::diag(n1), matrix(1, nrow = n2, ncol = 1))
-  Z2 <- Matrix::bdiag(lapply(1:n1,
-       function(ii)X[((ii - 1) * n2 + 1):(ii * n2), 2, drop = FALSE]))
-  Z <- cbind(Z1, Z2)
+
   ZtZ <- crossprod(Z)
   XtZ <- crossprod(X, Z)
-  H1 <- Matrix::Diagonal(2 * n1, x = c(rep(1, n1), rep(0, n1)))
-  H2 <-  Matrix::Diagonal(2 * n1, x = c(rep(0, n1), rep(1, n1)))
-  H <- cbind(H1, H2)
+
   Psi <- Matrix::Diagonal(2 * n1, x = c(rep(variances[jj], n1),
                                         rep(variances[jj], n1)))
   R <- sqrt(Psi)
@@ -221,16 +249,12 @@ if(setting == "cross"){
   }
   psi0 <- 1
   X <- cbind(1, matrix(runif(n * p, min = -1, max = 1), nrow = n, ncol = p))
-  XtX <- crossprod(X)
-  b <- rnorm(ncol(X))
-  Xb <- X %*% b
+
   Z <- cbind(Matrix::kronecker(Matrix::diag(1, nrow = n1), matrix(1, n2, 1)),
                 Matrix::kronecker(matrix(1, n1, 1), Matrix::diag(1, nrow = n2)))
   ZtZ <- crossprod(Z)
   XtZ <- crossprod(X, Z)
-  H1 <- Matrix::Diagonal(n1 + n2, c(rep(1, n1), rep(0, n2)))
-  H2 <- Matrix::Diagonal(n1 + n2, c(rep(0, n1), rep(1, n2)))
-  H <- cbind(H1, H2)
+
   psi <- c(variances[jj], variances[jj])
   Psi <- Matrix::Diagonal(n1 + n2, c(rep(psi[1], n1), rep(psi[2], n2)))
 
