@@ -121,7 +121,7 @@ do_one_sim <- function(settings)
   #############################################################################
   if(REML){
     ll_null <- stuff_REML$ll
-    ll_max <-limestest:::res_ll_cpp(Y = Y, X = X, Z = Z, XtY = XtY, ZtY = ZtY,
+    ll_max <-limestest:::res_ll_cpp(Y = y, X = X, Z = Z, XtY = XtY, ZtY = ZtY,
                                          XtX = XtX, XtZ = XtZ, ZtZ = ZtZ,
                                          Psi_r = Psi_hat_r, psi_r = psi_hat[r],
                                          H = H, get_val = TRUE, get_score = FALSE,
