@@ -7,24 +7,33 @@ library(doRNG)
 set.seed(1336)
 
 today <- as.numeric(format(Sys.time(), "%H%d%m%y"))
-array_id <- as.integer(Sys.getenv('SLURM_ARRAY_TASK_ID'))
-num_arrays <- 30 # This needs to be the same as the --array=1-30 argument in sh
+
 
 ###############################################################################
 # Settings
 ###############################################################################
 
 # Common settings
-num_cores <-  as.integer(Sys.getenv("SLURM_CPUS_ON_NODE"))
-out_dir <- "/blue/k.ekvall/k.ekvall/Simulations/unif_lmm/R1/Results/" # has to end in /
-fun_dir <- "/blue/k.ekvall/k.ekvall/Simulations/unif_lmm/R1/" # has to end in /
+num_reps <- 1e1
+
+# Uncomment this to run on cluster
+# num_cores <- as.integer(Sys.getenv("SLURM_CPUS_ON_NODE"))
+# out_dir <- "/blue/k.ekvall/k.ekvall/Simulations/unif_lmm/R1/Results/" # has to end in /
+# fun_dir <- "/blue/k.ekvall/k.ekvall/Simulations/unif_lmm/R1/" # has to end in /
+# array_id <- as.integer(Sys.getenv('SLURM_ARRAY_TASK_ID'))
+# num_arrays <- 30 # This needs to be the same as the --array=1-30 argument in sh
+
+# Uncomment this to run on one computer
+num_cores <- 8
+out_dir <- "~/GitHub/uniform_lmm_suppl/R1/Results/" # has to end in /
+fun_dir <- "~/GitHub/uniform_lmm_suppl/R1/" # has to end in /
+array_id <- 1
+num_arrays <- 1
 
 cl <- makeCluster(num_cores)
 registerDoParallel(cl)
 
 source(paste0(fun_dir, "sim_funs_R1.R"))
-# Note the p does not include intercept here; notation slightly different from paper
-# to facilitate coding
 
 # psi1-psi3 parameterize 2x2 covariance matrix of random intercept & slope
 corr_settings <- rbind(cbind("n1" = 1000, "n2" = 3, "p" = 2, "psi1" = 1,
@@ -89,9 +98,10 @@ expand_settings <- function(set, seed = NULL){
     set.seed(seed)
   }
   n <- set$n1 * set$n2
-  X <- cbind(1, matrix(runif(n * set$p, min = -1, max = 1), nrow = n, ncol = set$p))
+  pm1 <- set$p - 1
+  X <- cbind(1, matrix(runif(n * pm1, min = -1, max = 1), nrow = n, ncol = pm1))
   XtX <- crossprod(X)
-  b <- rnorm(set$p + 1)
+  b <- rnorm(set$p)
   Xb <- X %*% b
   
   if(set$type == "corr"){
@@ -123,10 +133,11 @@ expand_settings <- function(set, seed = NULL){
     H1 <- Matrix::Diagonal(set$n1 + set$n2, c(rep(1, set$n1), rep(0, set$n2)))
     H2 <- Matrix::Diagonal(set$n1 + set$n2, c(rep(0, set$n1), rep(1, set$n2)))
     H <- cbind(H1, H2)
-    Z <- cbind(Matrix::kronecker(Matrix::diag(1, nrow = set$n1), matrix(1, set$n2, 1)),
-               Matrix::kronecker(matrix(1, set$n1, 1), Matrix::diag(1, nrow = set$n2)))
-    R <- Matrix::Diagonal(set$n1 + set$n2, c(rep(sqrt(psi[1]), set$n1), 
-                                             rep(sqrt(psi[2]), set$n2)))
+    Z <- cbind(Matrix::kronecker(Matrix::Diagonal(n = set$n1), matrix(1, set$n2, 1)),
+               Matrix::kronecker(matrix(1, set$n1, 1), Matrix::Diagonal(n = set$n2)))
+    R <- methods::as(Matrix::Diagonal(set$n1 + set$n2, c(rep(sqrt(psi[1]), set$n1), 
+                                             rep(sqrt(psi[2]), set$n2))), 
+                     "generalMatrix")
   }
   
   ZtZ <- methods::as(crossprod(Z), "generalMatrix")
@@ -146,16 +157,18 @@ for(ii in 1:nrow(all_settings)){
     out_mat <- foreach(kk = 1:num_reps, .combine = rbind,
                        .errorhandling = "remove",
                        .packages = c("limestest", "lme4", "Matrix")) %dorng%{
-                         c(do_one_sim(settings_ii))
+                         data.frame(do_one_sim(settings_ii), all_settings[ii, ])
                        }
   }
 }
 
-stopCluster(cl)
 
 ###############################################################################
 # Output
 ###############################################################################
-out <- tidyr::tibble(tidyr::as_tibble(out_mat), rep(setting_ii, num_reps))
-colnames(out) <- c("LL", "RLL", "LRT", "WLD", names(settings_ii))
-saveRDS(out, paste0(out_dir, "lmm_sims_", today, "_", array_id, ".Rds"))
+colnames(out_mat)[1:4] <- c("PSCR", "RSCR", "LRT", "WLD")
+out <- tidyr::tibble(out_mat)
+
+saveRDS(out, paste0(out_dir, "unif_lmm_sims_", today, "_", array_id, ".Rds"))
+
+stopCluster(cl)
