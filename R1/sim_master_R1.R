@@ -57,7 +57,7 @@ indep_settings <- rbind(cbind("n1" = 1000, "n2" = 3, "p" = 2,
                        cbind("n1" = 1000, "n2" = 3, "p" = 2,
                              "psi1" = seq(0, 0.3, length.out = 10),
                              "psi2" = 0.3, "psi3" = 1, "psi4" = NA),
-                       cbind("n1" = 20, "n2" = 3, "p" = 2, 
+                       cbind("n1" = 20, "n2" = 3, "p" = 2,
                              "psi1" = seq(0, 0.8, length.out = 10),
                              "psi2" = seq(0, 0.8, length.out = 10),
                              "psi3" = 1, "psi4" = NA),
@@ -103,7 +103,7 @@ expand_settings <- function(set, seed = NULL){
   XtX <- crossprod(X)
   b <- rnorm(set$p)
   Xb <- X %*% b
-  
+
   if(set$type == "corr"){
     psi <- c(set$psi1, set$psi2, set$psi3, set$psi4)
     Z <- Matrix::bdiag(lapply(1:set$n1,
@@ -135,14 +135,14 @@ expand_settings <- function(set, seed = NULL){
     H <- cbind(H1, H2)
     Z <- cbind(Matrix::kronecker(Matrix::Diagonal(n = set$n1), matrix(1, set$n2, 1)),
                Matrix::kronecker(matrix(1, set$n1, 1), Matrix::Diagonal(n = set$n2)))
-    R <- methods::as(Matrix::Diagonal(set$n1 + set$n2, c(rep(sqrt(psi[1]), set$n1), 
-                                             rep(sqrt(psi[2]), set$n2))), 
+    R <- methods::as(Matrix::Diagonal(set$n1 + set$n2, c(rep(sqrt(psi[1]), set$n1),
+                                             rep(sqrt(psi[2]), set$n2))),
                      "generalMatrix")
   }
-  
+
   ZtZ <- methods::as(crossprod(Z), "generalMatrix")
   XtZ <- as.matrix(crossprod(X, Z))
-  
+
   list("n1" = set$n1, "n2" = set$n2, "X" = X, "Z" = Z, "psi" = psi, "H" = H,
        "Xb" = Xb, "R" = R, "XtX" = XtX, "XtZ" = XtZ, "ZtZ" = ZtZ,
        "REML" = 1, "type" = set$type)
@@ -150,25 +150,27 @@ expand_settings <- function(set, seed = NULL){
 
 set_per_array <- ceiling(nrow(all_settings) / num_arrays)
 assigned_array <- rep(1:num_arrays, each = set_per_array)[1:nrow(all_settings)]
-
+out <- data.frame()
 for(ii in 1:nrow(all_settings)){
   if(assigned_array[ii] == array_id){
     settings_ii <- expand_settings(all_settings[ii, ])
-    out_mat <- foreach(kk = 1:num_reps, .combine = rbind,
+    out_one <- foreach(kk = 1:num_reps, .combine = rbind,
                        .errorhandling = "remove",
                        .packages = c("limestest", "lme4", "Matrix")) %dorng%{
-                         data.frame(do_one_sim(settings_ii), all_settings[ii, ])
+                         merge(data.frame(matrix(do_one_sim(settings_ii), nrow = 1)),
+                               all_settings[ii, ])
                        }
+    out <- rbind(out, out_one)
   }
 }
-
+stopCluster(cl)
 
 ###############################################################################
 # Output
 ###############################################################################
-colnames(out_mat)[1:4] <- c("PSCR", "RSCR", "LRT", "WLD")
+names(out)[1:4] <- c("PSCR", "RSCR", "LRT", "WLD")
 out <- tidyr::tibble(out_mat)
 
 saveRDS(out, paste0(out_dir, "unif_lmm_sims_", today, "_", array_id, ".Rds"))
 
-stopCluster(cl)
+
