@@ -29,7 +29,7 @@ saveRDS(object = fig_dat, file = "~/GitHub/uniform_lmm_suppl/R1/fig_dat.Rds")
 ###############################################################################
 # Clustered data, random effect correlation near negative unity
 ###############################################################################
-p1 <- fig_dat %>% filter(type == "corr", n1 == 1000, p == 2, psi1 == psi3) %>%
+p1 <- fig_dat %>% filter(type == "corr", n1 == 500, p == 2, psi1 == psi3) %>%
   ggplot(aes(x = psi2, y = prop, group = stat)) +
   geom_line(aes(color = stat, lty = stat)) +
   geom_ribbon(aes(ymin = prop - 2 * se, ymax = pmin(prop + 2 * se, 1)), alpha = 0.1) +
@@ -62,7 +62,7 @@ if(PDF) ggsave(filename = paste0(out_dir, "fig_corr.pdf"), plot = p_corr,
 # Clustered data, random effect variances near zero 
 ###############################################################################
 
-p4 <- fig_dat %>% filter(type == "indep", n1 == 1000, p == 2, psi1 == psi2) %>%
+p4 <- fig_dat %>% filter(type == "indep", n1 == 500, p == 2, psi1 == psi2) %>%
   # filter(stat %in% c("LRT", "WLD"), param <= 0.2) %>%
   ggplot(aes(x = psi1, y = prop, group = stat)) +
   geom_line(aes(color = stat, lty = stat)) +
@@ -137,7 +137,7 @@ if(PDF) ggsave(filename = paste0(out_dir, "fig_cross.pdf"), plot = p_crossed,
 
 p41 <- p4 + ggtitle("") + ylim(0.939, 0.981)
 
-p42 <- fig_dat %>% filter(type == "indep", n1 == 1000, p == 2, psi1 > psi2) %>%
+p42 <- fig_dat %>% filter(type == "indep", n1 == 500, p == 2, psi1 > psi2) %>%
   ggplot(aes(x = psi1, y = prop, group = stat)) +
   geom_line(aes(color = stat, lty = stat)) +
   geom_ribbon(aes(ymin = prop - 2 * se, ymax = pmin(prop + 2 * se, 1)), alpha = 0.1) +
@@ -145,7 +145,7 @@ p42 <- fig_dat %>% filter(type == "indep", n1 == 1000, p == 2, psi1 > psi2) %>%
   theme_Publication() + theme(legend.position = "none")  + ylim(0.939, 0.981) +
   geom_hline(yintercept=0.95)
 
-p43 <- fig_dat %>% filter(type == "indep", n1 == 1000, p == 2, psi1 < psi2) %>%
+p43 <- fig_dat %>% filter(type == "indep", n1 == 500, p == 2, psi1 < psi2) %>%
   ggplot(aes(x = psi1, y = prop, group = stat)) +
   geom_line(aes(color = stat, lty = stat)) +
   geom_ribbon(aes(ymin = prop - 2 * se, ymax = pmin(prop + 2 * se, 1)), alpha = 0.1) +
