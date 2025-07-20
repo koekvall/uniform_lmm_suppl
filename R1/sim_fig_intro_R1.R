@@ -5,6 +5,9 @@ library(foreach)
 library(doParallel)
 library(doRNG)
 
+PDF <- TRUE
+out_dir <- "~/GitHub/uniform_lmm_suppl/R1/Figures/"
+
 one_sim <- function(psi) {
   n1 <- 50
   n2 <- 5
@@ -65,9 +68,11 @@ one_sim <- function(psi) {
 }
 
 # Settings
+
+# Change fourth element to change error variance
 psi_true <- c(1e-3, 0, 1e-3, 1)
 
-nsim <- 1000
+nsim <- 10000
 
 ### For multi-core simulation
 totalCores = detectCores()
@@ -82,10 +87,11 @@ vals <- foreach(r = 1:nsim, .packages = c("trust", "limestest", "Matrix", "lme4"
 stopCluster(cluster)
 
 ############ PLOTTING ###############
+if(PDF) pdf(paste0(out_dir, "fig_intro.pdf"), width = 15, height = 6)
 cex_val <- 1.8
 par(mfrow = c(1, 3))
 par(mar = c(5, 4.5, 4, 2))
-probs <- ppoints(nsim/10)
+probs <- ppoints(nsim/100)
 plot(x = qchisq(probs, df = 4), y = quantile(vals[, 1], probs = probs),
      xlim = c(0, 14), ylim = c(0, 14),
      main = "Score", xlab = "Chi-squared quantile",
@@ -104,7 +110,10 @@ plot(x = qchisq(probs, df = 4), y = quantile(vals[, 3], probs = probs),
      ylab = "Empirical quantile",
      cex.main = cex_val, cex.axis = cex_val, cex.lab = cex_val)
 abline(a = 0, b = 1)
+if(PDF) dev.off()
 #####################################
+
+
 
 cat("Coverage of Score, Wald, and LRT: ", colMeans(vals < qchisq(0.95, df = 4)),
     "\n")
