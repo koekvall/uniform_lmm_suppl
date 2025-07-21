@@ -34,7 +34,7 @@ p1 <- fig_dat %>% filter(type == "corr", n1 == 500, p == 2, psi1 == psi3) %>%
   geom_line(aes(color = stat, lty = stat)) +
   geom_ribbon(aes(ymin = prop - 2 * se, ymax = pmin(prop + 2 * se, 1)), alpha = 0.1) +
   labs(lty = "Statistic", color = "Statistic", x = expression(psi[2]), y = "Coverage") +
-  theme_Publication() + theme(legend.position = c(0.9, 0.9)) + ggtitle("Large sample") + ylim(0.935, 0.975)+
+  theme_Publication() + theme(legend.position = c(0.9, 0.9)) + ggtitle("Large sample") + ylim(0.925, 0.975)+
   geom_hline(yintercept=0.95)
 
 p2 <-  fig_dat %>% filter(type == "corr", n1 == 20, n2 == 3, p == 2) %>%
@@ -69,7 +69,7 @@ p4 <- fig_dat %>% filter(type == "indep", n1 == 500, p == 2, psi1 == psi2) %>%
   geom_ribbon(aes(ymin = prop - 2 * se, ymax = pmin(prop + 2 * se, 1)), alpha = 0.1) +
   labs(lty = "Statistic", color = "Statistic", x = expression(psi[1]), y = "Coverage") +
   theme_Publication() + theme(legend.position = c(0.9, 0.9)) + ggtitle("Large sample")  + 
-  ylim(0.939, 0.981) + geom_hline(yintercept=0.95)
+  ylim(0.93, 0.985) + geom_hline(yintercept=0.95)
 
 
 p5 <- fig_dat %>% filter(type == "indep", n1 == 20, n2 == 3, p == 2) %>%
@@ -135,14 +135,14 @@ if(PDF) ggsave(filename = paste0(out_dir, "fig_cross.pdf"), plot = p_crossed,
 # Different values of psi1 and psi2, independent clusters
 ###############################################################################
 
-p41 <- p4 + ggtitle("") + ylim(0.939, 0.981)
+p41 <- p4 + ggtitle("") + ylim(0.93, 0.985)
 
 p42 <- fig_dat %>% filter(type == "indep", n1 == 500, p == 2, psi1 > psi2) %>%
   ggplot(aes(x = psi1, y = prop, group = stat)) +
   geom_line(aes(color = stat, lty = stat)) +
   geom_ribbon(aes(ymin = prop - 2 * se, ymax = pmin(prop + 2 * se, 1)), alpha = 0.1) +
   labs(lty = "Statistic", color = "Statistic", x = expression(psi[1]), y = "Coverage") +
-  theme_Publication() + theme(legend.position = "none")  + ylim(0.939, 0.981) +
+  theme_Publication() + theme(legend.position = "none")  + ylim(0.93, 0.985) +
   geom_hline(yintercept=0.95)
 
 p43 <- fig_dat %>% filter(type == "indep", n1 == 500, p == 2, psi1 < psi2) %>%
@@ -150,7 +150,7 @@ p43 <- fig_dat %>% filter(type == "indep", n1 == 500, p == 2, psi1 < psi2) %>%
   geom_line(aes(color = stat, lty = stat)) +
   geom_ribbon(aes(ymin = prop - 2 * se, ymax = pmin(prop + 2 * se, 1)), alpha = 0.1) +
   labs(lty = "Statistic", color = "Statistic", x = expression(psi[1]), y = "Coverage") +
-  theme_Publication() + theme(legend.position = "none")  + ylim(0.939, 0.981) +
+  theme_Publication() + theme(legend.position = "none")  + ylim(0.93, 0.985) +
   geom_hline(yintercept=0.95)
 
 p_diff_psi <- p41 + p42 + p43 + plot_layout(ncol = 3)
@@ -162,7 +162,7 @@ if(PDF) ggsave(filename = paste0(out_dir, "fig_diff_psi.pdf"), plot = p_diff_psi
 # Different values of n1 and n2 with crossed random effects
 ###############################################################################
 
-p71 <- p7 + ggtitle("") + ylim(0.7, 1)
+p71 <- p7 + ggtitle("") + ylim(0.7, 1) + theme(legend.position = c(0.1, 0.3))
 
 p72 <- fig_dat %>% filter(type == "cross",  n2 == 80, p == 2, psi1 == psi2) %>%
   ggplot(aes(x = psi1, y = prop, group = stat)) +
