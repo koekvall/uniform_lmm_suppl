@@ -87,7 +87,7 @@ vals <- foreach(r = 1:nsim, .packages = c("trust", "limestest", "Matrix", "lme4"
 stopCluster(cluster)
 
 ############ PLOTTING ###############
-if(PDF) pdf(paste0(out_dir, "fig_intro.pdf"), width = 15, height = 6)
+if(PDF) pdf(paste0(out_dir, "fig_intro.pdf"), width = 15, height = 5)
 cex_val <- 1.8
 par(mfrow = c(1, 3))
 par(mar = c(5, 4.5, 4, 2))
