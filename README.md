@@ -15,4 +15,4 @@ running one replication for the different settings considered.
 The simulations and figure for the Introduction were done separately
 using the file `sim_fig_intro.R`.
 
-Figures can be created using the file `sec5_figures.R`.
+Figures can be created using the file `figures.R`.
