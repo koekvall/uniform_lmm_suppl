@@ -5,7 +5,7 @@ library(ggthemes)
 PDF <- TRUE
 
 # Output and wokring directory
-out_dir <- "~/GitHub/uniform_lmm_suppl/R1/Figures/"
+out_dir <- "~/GitHub/uniform_lmm_suppl/Figures/"
 source("~/GitHub/uniform_lmm_suppl/R1/ggplot_theme_Publication.R")
 
 
@@ -14,7 +14,7 @@ source("~/GitHub/uniform_lmm_suppl/R1/ggplot_theme_Publication.R")
 ###############################################################################
 
 # UNCOMMENT THIS TO READ RAW DATA PRODICED BY SIMS
-fig_dat <- list.files(path = "~/GitHub/uniform_lmm_suppl/R1/Results/",
+fig_dat <- list.files(path = "~/GitHub/uniform_lmm_suppl/Results/",
                       pattern = ".Rds", full.names = T) %>%
   map_dfr(readRDS) %>% pivot_longer(cols = c("RSCR", "PSCR", "LRT", "WLD"),
                                     names_to = c("stat")) %>%
@@ -23,7 +23,7 @@ fig_dat <- list.files(path = "~/GitHub/uniform_lmm_suppl/R1/Results/",
   group_by(type, n1, n2, p, psi1, psi2, psi3, psi4, stat) %>%
   summarize(prop = mean(value <= qchisq(0.95, df)), reps = n()) %>%
   mutate(se = sqrt(prop * (1 - prop) / reps))
-saveRDS(object = fig_dat, file = "~/GitHub/uniform_lmm_suppl/R1/fig_dat.Rds")
+saveRDS(object = fig_dat, file = "~/GitHub/uniform_lmm_suppl/fig_dat.Rds")
 #fig_dat <- readRDS(file = "./Data/fig_dat.Rds")
 
 ###############################################################################

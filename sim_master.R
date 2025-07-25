@@ -25,8 +25,8 @@ num_reps <- 1e1
 
 # Uncomment this to run on one computer
 num_cores <- 8
-out_dir <- "~/GitHub/uniform_lmm_suppl/R1/Results/" # has to end in /
-fun_dir <- "~/GitHub/uniform_lmm_suppl/R1/" # has to end in /
+out_dir <- "~/GitHub/uniform_lmm_suppl/Results/" # has to end in /
+fun_dir <- "~/GitHub/uniform_lmm_suppl/" # has to end in /
 array_id <- 1
 num_arrays <- 1
 

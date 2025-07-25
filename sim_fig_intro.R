@@ -6,7 +6,7 @@ library(doParallel)
 library(doRNG)
 
 PDF <- TRUE
-out_dir <- "~/GitHub/uniform_lmm_suppl/R1/Figures/"
+out_dir <- "~/GitHub/uniform_lmm_suppl/Figures/"
 
 one_sim <- function(psi) {
   n1 <- 50
